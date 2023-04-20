@@ -5,7 +5,8 @@
 #include <sstream>
 
 using namespace std;
-const string fileString = "C:\\FirstCursProgramm\\C++\\stepik_lab_2.3\\text.txt";
+const string fileTextString = "C:\\FirstCursProgramm\\C++\\stepik_lab_2.3\\text.txt";
+const string fileResultString = "C:\\FirstCursProgramm\\C++\\stepik_lab_2.3\\result.txt";
 const vector<string> alphabet = {"(", ")", "+", "-", "*", "/", " "};
 
 struct Stack{
@@ -53,12 +54,21 @@ bool isEmpty(Stack *&head){
     return head == nullptr;
 }
 
-void printStack(Stack *head){
+string printStack(Stack *head){
+    string res = "";
     while(!isEmpty(head)){
-        cout << head->data << " ";
+        res += head->data;
+        res += " ";
         head = head->next;
     }
+    return res;
 }
+
+void addString(string &resultString, string addString, bool flag){
+    resultString += addString;
+    if(flag) resultString += "\n";
+}
+
 
 void deleteStack(Stack *&head){
     while(!isEmpty(head)){
@@ -117,7 +127,7 @@ vector<string> splitString(string str){
     return tokens;
 }
 
-string fromExpressionToReversePolishNotation(Stack *&stack, string str) {
+string fromExpressionToReversePolishNotation(Stack *&stack, string str, string &resultString) {
     string res = "";
     vector<string> tokens = splitString(str);
     if (tokens.size() == 0){
@@ -146,6 +156,8 @@ string fromExpressionToReversePolishNotation(Stack *&stack, string str) {
             res += tokens[i];
             res += ' ';
         }
+        addString(resultString, "Выходная строка:" + res, 0);
+        addString(resultString, " Стек:" + printStack(stack), 1);
     }
     while(!isEmpty(stack)){
         res += pop(stack);
@@ -169,19 +181,37 @@ string solveExpression(Stack *& stack, string str){
 
 int main() {
     Stack *stack = new Stack;
-    string inputString, resultString, answerString;
+    string inputString, polishString, answerString, resultString = "";
     try {
-        ifstream file(fileString);
+        ifstream file(fileTextString);
         if (file.is_open()) {
-            getline(file, inputString);
+            while(getline(file, inputString)){
+                addString(resultString, "Изначальное выражение:", 0);
+                addString(resultString, inputString, 1);
+                inputString.erase(remove_if(inputString.begin(), inputString.end(), ::isspace), inputString.end());
+                polishString = fromExpressionToReversePolishNotation(stack,  inputString, resultString);
+                deleteStack(stack);
+                answerString = solveExpression(stack, polishString);
+                addString(resultString, "Обратная польская нотация: ",0);
+                addString(resultString, polishString, 1);
+                addString(resultString, "Ответ: ", 0);
+                addString(resultString, answerString, 1);
+                addString(resultString, "--------------------------------------------------------------------", 1);
+            }
         }
-        inputString.erase(remove_if(inputString.begin(), inputString.end(), ::isspace), inputString.end());
-        resultString = fromExpressionToReversePolishNotation(stack,  inputString);
-        deleteStack(stack);
-        answerString = solveExpression(stack, resultString);
-        cout << resultString << "\n" << answerString;
         file.close();
     }catch (int i){
-        cout << "Some exception!";
+        cout << "Some exception in input file!";
     }
+    try{
+        ofstream fileExit(fileResultString, ios::out | ios::trunc);
+        if(fileExit.is_open()){
+            fileExit << resultString;
+        }
+        fileExit.close();
+    }catch (int i){
+        cout << "Some exception in exit file!";
+    }
+    cout << resultString;
+    getchar();
 }
