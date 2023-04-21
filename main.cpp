@@ -64,6 +64,14 @@ string printStack(Stack *head){
     return res;
 }
 
+int sizeStack(Stack *head){
+    int count = 0;
+    while(!isEmpty(head)){
+        count++;
+        head = head->next;
+    }
+    return count;
+}
 void addString(string &resultString, string addString, bool flag){
     resultString += addString;
     if(flag) resultString += "\n";
@@ -121,6 +129,9 @@ vector<string> splitString(string str){
             str1 = "";
         }else if(i >= '0' && i <= '9'){
             str1 += i;
+        }else{
+            tokens.clear();
+            return tokens;
         }
     }
     if (str1 != "" && str1 != " ") tokens.push_back(str1);
@@ -129,7 +140,9 @@ vector<string> splitString(string str){
 
 string fromExpressionToReversePolishNotation(Stack *&stack, string str, string &resultString) {
     string res = "";
+    int count1 = 0, count2 = 0;
     vector<string> tokens = splitString(str);
+    if(tokens.size() == 0) return "В выражении допущена ошибка, невозможно вычислить обратную польскую нотацию:(";
     if (tokens.size() == 0){
         return "Wrong input!";
     }
@@ -137,8 +150,10 @@ string fromExpressionToReversePolishNotation(Stack *&stack, string str, string &
         if (find(alphabet.begin(), alphabet.end(), tokens[i]) != alphabet.end()) {
             if (tokens[i] == "(") {
                 push(stack, tokens[i]);
+                count1++;
             } else if (tokens[i] == ")") {
-                while (top(stack) != "(") {
+                count2++;
+                while (top(stack) != "(" && !isEmpty(stack)) {
                     res += pop(stack);
                     res += ' ';
                 }
@@ -163,20 +178,28 @@ string fromExpressionToReversePolishNotation(Stack *&stack, string str, string &
         res += pop(stack);
         res += ' ';
     }
+    if(count1 != count2)
+        return "Несоответсвие скобок, невозможно вычислить обратную польскую нотацию:(";
     return res;
 }
 
 string solveExpression(Stack *& stack, string str){
+    if(str == "В выражении допущена ошибка, невозможно вычислить обратную польскую нотацию:(" || str == "Несоответсвие скобок, невозможно вычислить обратную польскую нотацию:(")
+        return "ОШИБКА!";
     vector<string> tokens = splitString(str);
     for(int i = 0; i < tokens.size(); i++){
         if (find(alphabet.begin(), alphabet.end(), tokens[i]) != alphabet.end()) {
+            if(sizeStack(stack) < 2) return "В выражении допущена ошибка, невозможно посчитать значение:(";
             push(stack, to_string(action(atof(pop(stack).c_str()), atof(pop(stack).c_str()), tokens[i])));
 
         }else{
             push(stack, tokens[i]);
         }
     }
-    return pop(stack);
+    if(sizeStack(stack) == 1) return pop(stack);
+    else{
+        return "В выражении допущена ошибка, невозможно посчитать значение:(";
+    }
 }
 
 int main() {
@@ -189,6 +212,7 @@ int main() {
                 addString(resultString, "Изначальное выражение:", 0);
                 addString(resultString, inputString, 1);
                 inputString.erase(remove_if(inputString.begin(), inputString.end(), ::isspace), inputString.end());
+                deleteStack(stack);
                 polishString = fromExpressionToReversePolishNotation(stack,  inputString, resultString);
                 deleteStack(stack);
                 answerString = solveExpression(stack, polishString);
